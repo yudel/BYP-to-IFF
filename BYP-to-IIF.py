@@ -230,7 +230,7 @@ def main_program(mode, file_path, date_value):
     data["PD"]["account"]="Publish Drive"
     data["PD"]["lookuptable"]=isbn_to_item
 
-    out_dir: str='byp_iif\\'
+    out_dir: str='..\\byp_iif\\'
     out_file=my_mode
     set_output(out_dir+out_file+'.iif') # Or set to stdout # set_output()
 
@@ -425,7 +425,7 @@ def main_program(mode, file_path, date_value):
     print(keys)
     # assert '39511' in keys, f"39511 is not in keys"
 
-    found_data = found_isbns[[isbnFieldName, titleFieldName,'Variation Id']]
+    found_data = found_isbns[[isbnFieldName, titleFieldName]]
 
     print("Printing found_data")
     print (found_data)
