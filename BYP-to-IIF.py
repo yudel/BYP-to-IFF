@@ -264,9 +264,9 @@ def main_program(mode, file_path, date_value):
             # Load in data["WC"]["inputfile"] to temporary dataframe
             # data["WC"]["inputfile"]='byp_iif\\byp-test-single.csv'
             # 		First Name 	Last Name 	State Code (Shipping)	Country Code (Shipping)
-            # 				Product Id	Variation Id	Product Variation	Quantity	Item Cost	Order Line Total (- Refund)	Order Line (w&#x2F;o tax)	creditcard_fee	Order Total Fee	Stripe Fee	Order Line Tax	Discount Amount	Cart Tax Amount	Order Shipping Amount
+            # 				Product Id	Variation Id	Product Variation	Quantity	Item Cost	Order Line Total (- Refund)	Order Line (w&#x2F;o tax)	creditcard_fee	Order Total Fee	Stripe Fee	Order Line Tax	Discount Amount	Cart Tax Amount
 
-            columns_to_import=['Order ID', 'Order Date','Order Total Amount','Product Id','Variation Id','Product Name','Item Cost','Quantity']
+            columns_to_import=['Order ID', 'Order Date','Order Total Amount','Product Id','Variation Id','Product Name','Item Cost','Quantity','Order Shipping Amount']
             all_columns_df=pd.read_csv(data[my_mode]["inputfile"], dtype=str)
             print (f'SOME COLUMNS OF THE DATAFRAME< FRESHULY IMPORTED from {data[my_mode]["inputfile"]}!')
             selected_columns=['Product Id','Product Name','Variation Id'] #'order_total',
@@ -293,9 +293,9 @@ def main_program(mode, file_path, date_value):
                 temp_df['processed']=True  # Example processing
                 # Is there shipping?
                 # Check if the "shipping_total" column exists
-                if 'shipping_total' in temp_df.columns:  # product # is -1,  as maintained manually in the db
+                if 'Order Shipping Amount' in temp_df.columns:  # product # is -1,  as maintained manually in the db
                     # Check if all values are the same
-                    unique_values=temp_df['shipping_total'].unique()
+                    unique_values=temp_df['Order Shipping Amount'].unique()
 
                     if len(unique_values) == 1:
                         print(f"The column 'shipping_total' has a single unique value: {unique_values[0]}")
@@ -303,7 +303,7 @@ def main_program(mode, file_path, date_value):
 
                             # Append a row with
                             # create a row where item_name="S&H",item_subtotal=unique_values[0],item_quantity=1, //price or quantity?
-                            my_row=pd.DataFrame({"item_name": ["S&H"], "item_subtotal": [unique_values[0]], "item_quantity": [1],"item_product_id":[-1]})
+                            my_row=pd.DataFrame({"Product Name": ["S&H"], "Item Cost": [unique_values[0]], "Quantity": [1],"Product Id":[-1]})
                             df=pd.concat([df, my_row], ignore_index=True)
                             print("adding...\n ",my_row,"\n....to df dataframe")
                             ## But.... we're not adding to the proper total. Why is that????
@@ -380,21 +380,21 @@ def main_program(mode, file_path, date_value):
     # Filter the rows where the ISBN is not in isbn_to_item
 
     # if (my_mode != 'WC'): #first the original way
-    print (f''' Let's unpack this:)
-            found_isbns=df[df[isbnFieldName].isin(data[my_mode]["lookuptable"].keys())]
-            where df[df[{isbnFieldName} is checked if in {data[my_mode]["lookuptable"]}
-            ''')
+	#print (f''' Let's unpack this:)
+    #        found_isbns=df[df[isbnFieldName].isin(data[my_mode]["lookuptable"].keys())]
+    #        where df[df[{isbnFieldName} is checked if in {data[my_mode]["lookuptable"]}
+    #        ''')
 
-    print ("As per CHATGPT REQUEST!")
-    print ("First the type:")
-    print(type(data[my_mode]["lookuptable"]))
-    print ("Now the data:")
-    print(data[my_mode]["lookuptable"])
-    #print("Now the Keys:")
-    #print(keys)
+    # print ("As per CHATGPT REQUEST!")
+    # print ("First the type:")
+    # print(type(data[my_mode]["lookuptable"]))
+    # print ("Now the data:")
+    # print(data[my_mode]["lookuptable"])
+    # print("Now the Keys:")
+    # print(keys)
 
-    print ("isbnFieldName")
-    print (df[isbnFieldName])
+    # print ("isbnFieldName")
+    # print (df[isbnFieldName])
     keys = list(data[my_mode]["lookuptable"].keys())
 
 
@@ -435,8 +435,8 @@ def main_program(mode, file_path, date_value):
 
     # Create a new DataFrame with only the missing ISBNs and their corresponding titles
     missing_data = missing_isbns[[isbnFieldName, titleFieldName]]
-    # if  my_mode == "WC":
-    #    missing_data = missing_isbns[isbnFieldName, titleFieldName, 'Variation Id']
+    if  my_mode == "WC":
+        missing_data = missing_isbns[[isbnFieldName, titleFieldName, 'Variation Id']]
 
     # Remove duplicate ISBNs, keeping only the first occurrence of each ISBN
     missing_data  = missing_data.drop_duplicates(subset=[isbnFieldName]).sort_values(by=titleFieldName)
@@ -555,15 +555,15 @@ def main_program(mode, file_path, date_value):
         # item=data[my_mode]["lookuptable"][row[data[my_mode]["isbn"]]]
         key=str(row[data[my_mode]["isbn"]])  # Convert to str
         item=(data[my_mode]["lookuptable"])[key]
-        print('data[my_mode]["lookuptable"]',data[my_mode]["lookuptable"])
+        # print('data[my_mode]["lookuptable"]',data[my_mode]["lookuptable"])
         title = item.split(':')[0]
         title=title[:25]
 
 
         if mtd_quantity:
-            print(f"Item: {item}, ISBN: {row[data[my_mode]['isbn']]} PTD_Quantity: {mtd_quantity}")
-            if (item==""):
-                print("Item is blank for ISBN ", row[data[my_mode]['isbn']])
+            # print(f"Item: {item}, ISBN: {row[data[my_mode]['isbn']]} PTD_Quantity: {mtd_quantity}")
+            #if (item==""):
+            #    print("Item is blank for ISBN ", row[data[my_mode]['isbn']])
             my_Sale: TRNS=TRNS(sheader_names, s_default_values)
             my_Sale.update_field("INVITEM",  item)
             decimalQuantity=Decimal(mtd_quantity) * Decimal('-1').quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
