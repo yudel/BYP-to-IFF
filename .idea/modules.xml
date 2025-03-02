@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/BYP-to-IFF code.iml" filepath="$PROJECT_DIR$/.idea/BYP-to-IFF code.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../BYP/_databases/catalog to csv/.idea/catalog to csv.iml" filepath="$PROJECT_DIR$/../../../BYP/_databases/catalog to csv/.idea/catalog to csv.iml" />
     </modules>
   </component>
 </project>
