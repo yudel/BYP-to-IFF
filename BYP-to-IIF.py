@@ -298,8 +298,8 @@ def main_program(mode, file_path, date_value):
                     unique_values=temp_df['Order Shipping Amount'].unique()
 
                     if len(unique_values) == 1:
-                        print(f"The column 'shipping_total' has a single unique value: {unique_values[0]}")
-                        if not pd.isna(unique_values[0]): # make sure it's not nothing
+                        # print(f"The column 'shipping_total' has a single unique value: {unique_values[0]}")
+                        if not pd.isna(unique_values[0]) and unique_values[0] not in [0, "0"]: # make sure it's not nothing
 
                             # Append a row with
                             # create a row where item_name="S&H",item_subtotal=unique_values[0],item_quantity=1, //price or quantity?
