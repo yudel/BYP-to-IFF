@@ -266,7 +266,7 @@ def main_program(mode, file_path, date_value):
             # 		First Name 	Last Name 	State Code (Shipping)	Country Code (Shipping)
             # 				Product Id	Variation Id	Product Variation	Quantity	Item Cost	Order Line Total (- Refund)	Order Line (w&#x2F;o tax)	creditcard_fee	Order Total Fee	Stripe Fee	Order Line Tax	Discount Amount	Cart Tax Amount
 
-            columns_to_import=['Order ID', 'Order Date','Order Total Amount','Product Id','Variation Id','Product Name','Item Cost','Quantity','Order Shipping Amount']
+            columns_to_import=['Order ID', 'Order Date','Order Total Amount','Product Id','Variation Id','Product Name','Item Cost','Quantity','Order Shipping Amount','creditcard_fee','Stripe Fee','Cart Tax Amount']
             all_columns_df=pd.read_csv(data[my_mode]["inputfile"], dtype=str)
             print (f'SOME COLUMNS OF THE DATAFRAME< FRESHULY IMPORTED from {data[my_mode]["inputfile"]}!')
             selected_columns=['Product Id','Product Name','Variation Id'] #'order_total',
@@ -303,7 +303,7 @@ def main_program(mode, file_path, date_value):
 
                             # Append a row with
                             # create a row where item_name="S&H",item_subtotal=unique_values[0],item_quantity=1, //price or quantity?
-                            my_row=pd.DataFrame({"Product Name": ["S&H"], "Item Cost": [unique_values[0]], "Quantity": [1],"Product Id":[-1]})
+                            my_row=pd.DataFrame({"Product Name": ["S&H"], "Item Cost": [unique_values[0]], "Quantity": [1],"Product Id":["-1"]})
                             df=pd.concat([df, my_row], ignore_index=True)
                             print("adding...\n ",my_row,"\n....to df dataframe")
                             ## But.... we're not adding to the proper total. Why is that????
@@ -316,8 +316,137 @@ def main_program(mode, file_path, date_value):
                 else:
                     print("The column 'shipping_total' does not exist in the DataFrame.")
 
+                # Sales Tax
+                if 'Cart Tax Amount' in temp_df.columns:  # product # is -1,  as maintained manually in the db
+                    # Check if all values are the same
+                    unique_values=temp_df['Cart Tax Amount'].unique()
+
+                    if len(unique_values) == 1:
+                        # print(f"The column 'Cart Tax Amount' has a single unique value: {unique_values[0]}")
+                        if not pd.isna(unique_values[0]) and unique_values[0] not in [0, "0"]: # make sure it's not nothing
+
+                            # Append a row with
+                            # create a row where item_name="S&H",item_subtotal=unique_values[0],item_quantity=1, //price or quantity?
+                            my_row=pd.DataFrame({"Product Name": ["Sales Tax Received"], "Item Cost": [unique_values[0]], "Quantity": [1],"Product Id":["-3"]})
+                            df=pd.concat([df, my_row], ignore_index=True)
+                            print("adding...\n ",my_row,"\n....to df dataframe")
+
+                    elif len(unique_values) > 1:
+                        print(f"The column 'shipping_total' has multiple unique values: {unique_values}")
+                        # We should fail cause this is weird
+                    else:
+                        print("The column 'shipping_total' exists but is empty (all values are NaN).")
+                else:
+                    print("The column 'shipping_total' does not exist in the DataFrame.")
+
                 # Append the processed temp_df to the final DataFrame
+                # Append the processed temp_df to the final DataFrame
+
+                # CREDIT CARD FEE!
+                if 'creditcard_fee' in temp_df.columns:  # product # is -2,  as maintained manually in the db
+                    # Check if all values are the same
+                    unique_values=temp_df['creditcard_fee'].unique()
+
+                    if len(unique_values) == 1:
+                        # print(f"The column 'creditcard_feel' has a single unique value: {unique_values[0]}")
+                        if not pd.isna(unique_values[0]) and unique_values[0] not in [0, "0"]:  # make sure it's not nothing
+
+                            # Append a row with
+                            # create a row where item_name="S&H",item_subtotal=unique_values[0],item_quantity=1, //price or quantity?
+                            value_str=unique_values[0].strip()
+
+                            # Check if the value is of the format "X, X" (i.e. two identical numbers separated by a comma)
+                            if "," in value_str:
+                                parts=[part.strip() for part in value_str.split(",")]
+                                if len(parts) == 2 and parts[0] == parts[1]:
+                                    value_str=parts[0]
+
+                            # Remove any unwanted currency symbols or thousands separators
+                            clean_value_str=value_str.replace("$", "").replace(",", "").strip()
+
+                            try:
+                                negative_item_cost=str(
+                                    (Decimal(clean_value_str) * Decimal(-1)).quantize(Decimal("0.01"),
+                                                                                      rounding=ROUND_HALF_UP))
+                            except InvalidOperation as e:
+                                print("Error converting value to Decimal:", e)
+                                negative_item_cost="0.00"  # Fallback value or handle error as needed
+
+                            my_row=pd.DataFrame({"Product Name": ["WooCommerce fee"], "Item Cost": [negative_item_cost], "Quantity": [1],
+                                                 "Product Id": ["-2"]})
+                            df=pd.concat([df, my_row], ignore_index=True)
+                            print("adding...\n ", my_row, "\n....to df dataframe")
+                            ## But.... we're not adding to the proper total. Why is that????
+
+                    elif len(unique_values) > 1:
+                        print(f"The column 'creditcard_fee' has multiple unique values: {unique_values}")
+                        # We should fail cause this is weird
+                    else:
+                        print("The column 'creditcard_fee' exists but is empty (all values are NaN).")
+                else:
+                    print("The column 'creditcard_fee' does not exist in the DataFrame.")
+
+                # STRIPE FEE!
+                if 'Stripe Fee' in temp_df.columns:  # product # is -2,  as maintained manually in the db
+                    # Check if all values are the same
+                    unique_values=temp_df['Stripe Fee'].unique()
+
+                    if len(unique_values) == 1:
+                        # print(f"The column 'Stripe Fee' has a single unique value: {unique_values[0]}")
+                        if not pd.isna(unique_values[0]) and unique_values[0] not in [0,
+                                                                                      "0"]:  # make sure it's not nothing
+
+                            # Append a row with
+                            # create a row where item_name="S&H",item_subtotal=unique_values[0],item_quantity=1, //price or quantity?
+                            value_str=unique_values[0].strip()
+
+                            # Check if the value is of the format "X, X" (i.e. two identical numbers separated by a comma)
+                            if "," in value_str:
+                                parts=[part.strip() for part in value_str.split(",")]
+                                if len(parts) == 2 and parts[0] == parts[1]:
+                                    value_str=parts[0]
+
+                            # Remove any unwanted currency symbols or thousands separators
+                            clean_value_str=value_str.replace("$", "").replace(",", "").strip()
+
+                            try:
+                                negative_item_cost=str(
+                                    (Decimal(clean_value_str) * Decimal(-1)).quantize(Decimal("0.01"),
+                                                                                      rounding=ROUND_HALF_UP))
+                            except InvalidOperation as e:
+                                print("Error converting value to Decimal:", e)
+                                negative_item_cost="0.00"  # Fallback value or handle error as needed
+
+                            my_row=pd.DataFrame(
+                                {"Product Name": ["WooCommerce fee"], "Item Cost": [negative_item_cost],
+                                 "Quantity": [1],
+                                 "Product Id": ["-2"]})
+                            df=pd.concat([df, my_row], ignore_index=True)
+                            print("adding...\n ", my_row, "\n....to df dataframe")
+                            ## But.... we're not adding to the proper total. Why is that????
+
+                    elif len(unique_values) > 1:
+                        print(f"The column 'Stripe Fee' has multiple unique values: {unique_values}")
+                        # We should fail cause this is weird
+                    else:
+                        print("The column 'Stripe Fee' exists but is empty (all values are NaN).")
+                else:
+                    print("The column 'Stripe Fee' does not exist in the DataFrame.")
+
+            # Append the processed temp_df to the final DataFrame
                 df=pd.concat([df, temp_df], ignore_index=True)
+                # Test: Check if the S&H rows were added to df
+
+            shipping_rows=df[(df["Product Name"] == "S&H") | (df["Product Id"] == -1)]
+
+            if not shipping_rows.empty:
+                print(f"{Fore.BLUE}Shipping (S&H) rows found in final DataFrame:")
+                print(shipping_rows[['Product Name', 'Item Cost', 'Quantity', 'Product Id']])
+
+            else:
+                print(f"{Fore.RED}No shipping (S&H) rows found. Check your concatenation logic.")
+
+            df=pd.concat([df, temp_df], ignore_index=True)
         case "LSI":
             # df = pd.read_csv(my_csv,dtype={"isbn_13": str})
             # df = pd.read_excel(data["LSI"]["inputfile"], dtype={"isbn_13": str,"isbn": str})
