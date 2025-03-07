@@ -52,6 +52,7 @@ df = pd.DataFrame() # just so we have it to kick around
 pd.set_option('display.width', 240)
 
 install_and_import('sqlite3','sqlite3')
+# install_and_import('sqlite3','sqlite3')
 import random
 random.seed()
 import atexit
@@ -277,7 +278,15 @@ def main_program(mode, file_path, date_value):
             available_columns=[col for col in columns_to_import if col in all_columns_df.columns]
 
             # Select only available columns
-            import_df=all_columns_df[available_columns]
+            import_df=all_columns_df[available_columns].copy()
+
+
+            # Create a mask where Variation Id is not NaN, not 0, and not an empty string
+            mask=(import_df['Variation Id'].notna()) & (import_df['Variation Id'] != 0) & (import_df['Variation Id'] != '') & (import_df['Variation Id'] != '0')
+
+            # For the rows that satisfy the mask, update Product Id with Variation Id
+            import_df.loc[mask, 'Product Id']=import_df.loc[mask, 'Variation Id']
+
 
             # import_df=pd.read_csv(data[my_mode]["inputfile"], dtype=str,usecols=columns_to_import)
             # Loop over inputfile
@@ -433,6 +442,7 @@ def main_program(mode, file_path, date_value):
                 else:
                     print("The column 'Stripe Fee' does not exist in the DataFrame.")
 
+                # Okay, within the order rows, now that we've processed the fees, we have to process the Bundles.
             # Append the processed temp_df to the final DataFrame
                 df=pd.concat([df, temp_df], ignore_index=True)
                 # Test: Check if the S&H rows were added to df
