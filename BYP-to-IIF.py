@@ -88,7 +88,7 @@ cursor = conn.cursor()
 try:
     # Execute the query to select all titles from BYP_Titles
     # okay, let's change this to also create a wcproductid_to_item dictionary
-    cursor.execute('SELECT  CAST("ISBN-13" AS TEXT) AS "ISBN-13", Item,CAST(ProductNumber AS TEXT) as ProductNumber FROM "QuickBook TitleList" WHERE "ISBN-13" <>"" OR "ItemProductNumber" <> ""  ')
+    cursor.execute('SELECT  CAST("ISBN-13" AS TEXT) AS "ISBN-13", Item,CAST(ProductNumber AS TEXT) as ProductNumber FROM "QuickBook TitleList" WHERE "ISBN-13" <>"" OR "ProductNumber" <> ""  ')
 
     # Fetch all results
     rows = cursor.fetchall()
@@ -296,6 +296,7 @@ def main_program(mode, file_path, date_value):
 
                 # put process rows into processed dataframe, df
             for order_id, temp_df in import_df.groupby('Order ID'):
+
                 # Process the temp_df for the current order
                 # For demonstration, let's add a column indicating processed
                 temp_df=temp_df.copy()  # Avoid modifying the original DataFrame
@@ -314,7 +315,7 @@ def main_program(mode, file_path, date_value):
                             # create a row where item_name="S&H",item_subtotal=unique_values[0],item_quantity=1, //price or quantity?
                             my_row=pd.DataFrame({"Product Name": ["S&H"], "Item Cost": [unique_values[0]], "Quantity": [1],"Product Id":["-1"]})
                             df=pd.concat([df, my_row], ignore_index=True)
-                            print("adding...\n ",my_row,"\n....to df dataframe")
+                            # print("adding...\n ",my_row,"\n....to df dataframe")
                             ## But.... we're not adding to the proper total. Why is that????
 
                     elif len(unique_values) > 1:
@@ -338,7 +339,7 @@ def main_program(mode, file_path, date_value):
                             # create a row where item_name="S&H",item_subtotal=unique_values[0],item_quantity=1, //price or quantity?
                             my_row=pd.DataFrame({"Product Name": ["Sales Tax Received"], "Item Cost": [unique_values[0]], "Quantity": [1],"Product Id":["-3"]})
                             df=pd.concat([df, my_row], ignore_index=True)
-                            print("adding...\n ",my_row,"\n....to df dataframe")
+                            # print("adding...\n ",my_row,"\n....to df dataframe")
 
                     elif len(unique_values) > 1:
                         print(f"The column 'shipping_total' has multiple unique values: {unique_values}")
@@ -384,7 +385,7 @@ def main_program(mode, file_path, date_value):
                             my_row=pd.DataFrame({"Product Name": ["WooCommerce fee"], "Item Cost": [negative_item_cost], "Quantity": [1],
                                                  "Product Id": ["-2"]})
                             df=pd.concat([df, my_row], ignore_index=True)
-                            print("adding...\n ", my_row, "\n....to df dataframe")
+                            # print("adding...\n ", my_row, "\n....to df dataframe")
                             ## But.... we're not adding to the proper total. Why is that????
 
                     elif len(unique_values) > 1:
@@ -431,7 +432,7 @@ def main_program(mode, file_path, date_value):
                                  "Quantity": [1],
                                  "Product Id": ["-2"]})
                             df=pd.concat([df, my_row], ignore_index=True)
-                            print("adding...\n ", my_row, "\n....to df dataframe")
+                            # print("adding...\n ", my_row, "\n....to df dataframe")
                             ## But.... we're not adding to the proper total. Why is that????
 
                     elif len(unique_values) > 1:
@@ -441,8 +442,13 @@ def main_program(mode, file_path, date_value):
                         print("The column 'Stripe Fee' exists but is empty (all values are NaN).")
                 else:
                     print("The column 'Stripe Fee' does not exist in the DataFrame.")
-
+                '''
                 # Okay, within the order rows, now that we've processed the fees, we have to process the Bundles.
+                # We're going to do that by looping over the temp_df
+                For each item,
+                    Is it a bundle? Determine by the name of the lookup file.
+                '''
+
             # Append the processed temp_df to the final DataFrame
                 df=pd.concat([df, temp_df], ignore_index=True)
                 # Test: Check if the S&H rows were added to df
